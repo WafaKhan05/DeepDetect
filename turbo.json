@@ -5,7 +5,16 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**"]
+      "outputs": [".next/**", "!.next/cache/**"],
+      "env": [
+        "KINDE_CLIENT_ID",
+        "KINDE_CLIENT_SECRET",
+        "KINDE_ISSUER_URL",
+        "KINDE_POST_LOGIN_REDIRECT_URL",
+        "KINDE_POST_LOGOUT_REDIRECT_URL",
+        "KINDE_SITE_URL",
+        "NEXT_PUBLIC_API_ENDPOINT"
+      ]
     },
     "lint": {
       "dependsOn": ["^lint"]
