@@ -5,7 +5,6 @@
   "private": true,
   "scripts": {
     "dev": "start.bat",
-    "build": "next build",
-    "start": "next start"
+    "build": "echo 'Not Required'"
   }
 }
