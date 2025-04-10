@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+python-multipart
+aiofiles
+fastapi[all]
+firebase-admin
+python-dotenv
