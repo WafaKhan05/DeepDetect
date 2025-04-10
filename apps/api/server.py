@@ -26,7 +26,7 @@ os.makedirs(UPLOAD_ROOT_DIR, exist_ok=True)
 origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "https://deep-detect-web.vercel.app/"
+    "https://deep-detect-web.vercel.app"
     # Add other allowed origins like deployed frontend
 ]
 
