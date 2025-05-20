@@ -171,16 +171,13 @@ video_transforms = transforms.Compose([
 #     print(f"Confidence: {prediction[1]:.2f}%")
 
 def sync_predict(model, path_to_video, device):
-    print(5)
     video_dataset = validation_dataset([path_to_video], sequence_length=20, transform=video_transforms)
     return asyncio.run(predict_main(model, video_dataset[0], device))
 
 async def run_prediction_in_background(model, file_location, device, ref, ws_manager, userId):
-    print(4)
     loop = asyncio.get_running_loop()
     result = await loop.run_in_executor(None, functools.partial(sync_predict, model, file_location, device))
 
-    print(6)
     prediction = "REAL" if result[0] == 1 else "FAKE"
     confidence = f"{result[1]:.2f}%"
 

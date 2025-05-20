@@ -70,12 +70,10 @@ def read_root():
 
 @app.post("/upload")
 async def upload_file(file: UploadFile = File(...), userId: str = Form(...)):
-    print(1)
     if file is None or userId is None or userId == "":
         return JSONResponse(content={"status": "error", "message": "file or userId is missing."})
 
     try:
-        print(2)
         timestamp = datetime.now()
         dir_timestamp = timestamp.strftime("%Y%m%d_%H%M%S")
         actual_filename = file.filename
@@ -113,11 +111,7 @@ async def upload_file(file: UploadFile = File(...), userId: str = Form(...)):
             "analysis_completed_on": None
         })
 
-        print(3)
-
         asyncio.create_task(run_prediction_in_background(model, file_location, device, ref, ws_manager, userId))
-
-        print(7)
 
         return JSONResponse(content={"status": "success", "message": "Upload successful. We are analyzing your media you can see it in the history.", "filename": file.filename})
     
