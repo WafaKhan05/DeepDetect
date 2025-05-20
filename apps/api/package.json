@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "start.bat",
-    "build": "echo 'Not Required'"
+    "build": "echo 'Not Required'",
+    "install": "install.bat"
   }
 }

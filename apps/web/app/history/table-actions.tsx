@@ -1,9 +1,10 @@
 "use client";
-import React, { useState } from "react";
+import React, { Dispatch, SetStateAction, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2, Trash2 } from "lucide-react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import { Upload } from "@/lib/types";
 
 interface Response {
   status: "error" | "success";
@@ -13,9 +14,11 @@ interface Response {
 const TableActions = ({
   fileId,
   userId,
+  setData,
 }: {
   fileId: string;
   userId: string;
+  setData: Dispatch<SetStateAction<Upload[]>>;
 }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
@@ -37,7 +40,7 @@ const TableActions = ({
     setIsDeleting(false);
 
     if (data.status === "success") {
-      router.refresh();
+      setData((prevData) => prevData.filter((item) => item.id !== fileId));
     }
   };
 

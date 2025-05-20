@@ -5,3 +5,8 @@ aiofiles
 fastapi[all]
 firebase-admin
 python-dotenv
+numpy
+torch
+torchvision
+opencv-python
+

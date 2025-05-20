@@ -1,4 +1,6 @@
-import { Button } from "@/components/ui/button";
+"use client";
+
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -7,23 +9,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { FileVideo, FileImage, Loader2Icon } from "lucide-react";
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { Upload } from "@/lib/types";
+import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
+import { FileImage, FileVideo, Loader2Icon } from "lucide-react";
 import { notFound } from "next/navigation";
+import { useEffect, useState } from "react";
 import TableActions from "./table-actions";
-
-interface Upload {
-  id: string;
-  file_name: string;
-  file_location: string;
-  uploaded_on: string;
-  file_type: string;
-  status: string;
-  confidence?: string | null;
-  prediction?: string | null;
-  result?: string | null;
-}
 
 interface Response {
   status: "error" | "success";
@@ -34,32 +25,53 @@ interface Response {
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
-export default async function HistoryPage() {
-  const { getUser } = getKindeServerSession();
+export default function HistoryPage() {
+  const [data, setData] = useState<Upload[]>([]);
 
-  const user = await getUser();
+  const { getUser, isLoading } = useKindeBrowserClient();
 
-  if (!user) {
-    notFound();
-  }
+  const user = getUser();
 
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_ENDPOINT}/user-uploads/${user.id}`,
-    {
-      cache: "no-store",
+  useEffect(() => {
+    if (isLoading) {
+      return;
     }
-  );
 
-  if (!res.ok) {
-    throw new Error("Failed to fetch user uploads");
-  }
+    if (!user) {
+      notFound();
+    }
 
-  const data: Response = await res.json();
+    if (user.id) {
+      fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/user-uploads/${user.id}`, {
+        cache: "no-store",
+      })
+        .then((res) => res.json())
+        .then((data) => setData(data.uploads ?? []));
+
+      const WebSocketUrl = process.env.NEXT_PUBLIC_WEBSOCKET_ENDPOINT;
+
+      const ws = new WebSocket(`${WebSocketUrl}/${user.id}`);
+
+      ws.onmessage = function (event) {
+        console.log("WebSocket Message:", event.data);
+
+        const data = JSON.parse(event.data);
+
+        if (data.event === "update_status") {
+          setData((prevData) =>
+            prevData.map((item) =>
+              item.id === data.data.id ? { ...item, ...data.data } : item
+            )
+          );
+        }
+      };
+    }
+  }, [user, isLoading]);
+
   return (
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-4xl font-bold">Analysis History</h1>
-        <Button variant="outline">Export History</Button>
       </div>
 
       <div className="bg-background rounded-lg shadow">
@@ -68,14 +80,16 @@ export default async function HistoryPage() {
             <TableRow>
               <TableHead>File</TableHead>
               <TableHead>Date</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead>Result</TableHead>
               <TableHead>Confidence</TableHead>
+              <TableHead>Analysis Completed On</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.uploads &&
-              data.uploads.map((item) => (
+            {user &&
+              data.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -91,29 +105,52 @@ export default async function HistoryPage() {
                   <TableCell>
                     <Badge
                       variant={
-                        item.status.toLowerCase() === "deepfake"
-                          ? "destructive"
-                          : item.status.toLowerCase() === "analyzing"
-                            ? "secondary"
-                            : "success"
+                        item.status.toLowerCase() === "analyzing"
+                          ? "secondary"
+                          : "outline"
                       }
                       className="flex justify-center items-center gap-4"
                     >
                       {item.status.toUpperCase()}
-                      <Loader2Icon size={12} className="animate-spin" />
+                      {item.status.toLowerCase() === "analyzing" && (
+                        <Loader2Icon size={12} className="animate-spin" />
+                      )}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {item.confidence ? item.confidence + "%" : "-"}
+                    {item.prediction ? (
+                      <Badge
+                        variant={
+                          item.prediction?.toLowerCase() === "fake"
+                            ? "destructive"
+                            : "success"
+                        }
+                        className="flex justify-center items-center gap-4"
+                      >
+                        {item.prediction?.toUpperCase() ?? "-"}
+                      </Badge>
+                    ) : (
+                      "-"
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {item.confidence ? item.confidence : "-"}
+                  </TableCell>
+                  <TableCell>
+                    {item.analysis_completed_on?.split(".")?.[0] ?? "-"}
                   </TableCell>
                   <TableCell className="text-right">
-                    <TableActions fileId={item.id} userId={user.id} />
+                    <TableActions
+                      fileId={item.id}
+                      userId={user.id as string}
+                      setData={setData}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
           </TableBody>
         </Table>
-        {!data.uploads && (
+        {!data.length && (
           <div className="w-full h-32 flex justify-center items-center text-muted-foreground">
             No Uploads.
           </div>

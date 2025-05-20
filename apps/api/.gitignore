@@ -3,3 +3,5 @@ uploads
 venv
 .env
 deepdetect_firebase.json
+models/deepfake_model.pt
+~
